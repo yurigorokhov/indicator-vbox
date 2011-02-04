@@ -10,6 +10,8 @@ import time
 import thread
 import subprocess
 
+event_dict = {}
+
 # Check that VirtualBox and VBoxManage are installed correctly
 def check_deps():
     # Make sure VirtualBox and VBoxManage exist
@@ -31,6 +33,40 @@ def is_vm_running(vmname):
     else:
         return 0  
 
+def set_image(menu_item, image_type):
+    if(image_type == "run"):
+        stock = gtk.STOCK_MEDIA_PLAY
+    elif(image_type == "suspend"):
+        stock = gtk.STOCK_STOP
+    else:
+        stock = gtk.STOCK_EDIT
+    img = gtk.image_new_from_stock(stock, gtk.ICON_SIZE_MENU)
+    menu_item.set_image(img)
+    img.show()
+
+def update_menu(menu):
+  is_running = 0
+  previous_item = 0
+  for item in menu.get_children():
+      if(item.get_name() == "GtkMenuItem"):
+          if(is_vm_running(item.get_label())):
+              is_running = 1;
+          else:
+              is_running = 0
+          previous_item = item
+      else:
+          if(is_running == 0 and item.get_label() == "Suspend"):
+              item.set_label("Run")
+              set_image(item, "run")
+              item.disconnect(event_dict[previous_item.get_label()])
+              event_dict[previous_item.get_label()] = item.connect("activate", launch_VM, previous_item.get_label())
+              
+          elif(is_running == 1 and item.get_label() == "Run"):
+              item.set_label("Suspend")
+              set_image(item, "suspend")
+              item.disconnect(event_dict[previous_item.get_label()])
+              event_dict[previous_item.get_label()] = item.connect("activate", suspend_VM, previous_item.get_label())
+              
 def create_menu(menu, ind):
   # Get the list of VM's
   vm_list = get_vm_list()
@@ -43,16 +79,15 @@ def create_menu(menu, ind):
     # start
     if(is_vm_running(vm) == 0):
         menu_items = gtk.ImageMenuItem("Run")
-        img = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU)
-        img.show()
-        menu_items.set_image(img)
+        set_image(menu_items, "run")
         menu.append(menu_items)
-        menu_items.connect("activate", launch_VM, vm)
+        event_dict[vm] = menu_items.connect("activate", launch_VM, vm)
         menu_items.show()
     else:
         menu_items = gtk.ImageMenuItem("Suspend")
+        set_image(menu_items, "suspend")
         menu.append(menu_items)
-        menu_items.connect("activate", suspend_VM, vm)
+        event_dict[vm] = menu_items.connect("activate", suspend_VM, vm)
         menu_items.show()
     # separator
     menu_items = gtk.SeparatorMenuItem()
@@ -62,9 +97,7 @@ def create_menu(menu, ind):
 
   #  Virtual Box menu item
   menu_items = gtk.ImageMenuItem("Control Panel") 
-  img = gtk.image_new_from_stock(gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU)
-  img.show()
-  menu_items.set_image(img)
+  set_image(menu_items, "control panel")
   menu.append(menu_items)
   menu_items.connect("activate", launch_VBox)
 
@@ -94,9 +127,14 @@ if __name__ == "__main__":
                               appindicator.CATEGORY_APPLICATION_STATUS)
   ind.set_status (appindicator.STATUS_ACTIVE)
   ind.set_attention_icon ("VBox")
- 
-  create_menu(menu, ind)
-  
-  gtk.main()
+
+  create_menu(menu, ind) 
+
+  while(True):
+    gtk.main_iteration(False)
+    update_menu(menu)
+    #time.sleep(0.05)
+      
+    
 
 
