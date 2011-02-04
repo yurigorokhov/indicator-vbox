@@ -45,12 +45,14 @@ def set_image(menu_item, image_type):
     img.show()
 
 def update_menu(menu):
+  are_any_running = 0
   is_running = 0
   previous_item = 0
   for item in menu.get_children():
       if(item.get_name() == "GtkMenuItem"):
           if(is_vm_running(item.get_label())):
-              is_running = 1;
+              is_running = 1
+	      are_any_running = 1
           else:
               is_running = 0
           previous_item = item
@@ -66,7 +68,8 @@ def update_menu(menu):
               set_image(item, "suspend")
               item.disconnect(event_dict[previous_item.get_label()])
               event_dict[previous_item.get_label()] = item.connect("activate", suspend_VM, previous_item.get_label())
-              
+  return are_any_running  
+
 def create_menu(menu, ind):
   # Get the list of VM's
   vm_list = get_vm_list()
@@ -134,7 +137,10 @@ if __name__ == "__main__":
   while(True):
     gtk.main_iteration(False)
     if(count == 100):
-      update_menu(menu)
+      if( update_menu(menu) == 1):
+	ind.set_status(appindicator.STATUS_ATTENTION)
+      else:
+	ind.set_status(appindicator.STATUS_ACTIVE)
       count = 0
     count = count + 1
     time.sleep(0.05)
