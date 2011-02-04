@@ -1,0 +1,16 @@
+VirtualBox Indicator Applet
+
+INSTALL
+--------------------------------------------
+
+To install simply run the install.sh script
+> sudo ./install.sh
+
+This will install VirtualBox-Inticator into /usr/local/bin by default.
+Edit the install.sh file if you want a different location.
+
+CONTACT
+--------------------------------------------
+Yuri Gorokhov
+yurigorokhov@gmail.com
+
