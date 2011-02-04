@@ -130,10 +130,14 @@ if __name__ == "__main__":
 
   create_menu(menu, ind) 
 
+  count = 0 
   while(True):
     gtk.main_iteration(False)
-    update_menu(menu)
-    #time.sleep(0.05)
+    if(count == 100):
+      update_menu(menu)
+      count = 0
+    count = count + 1
+    time.sleep(0.05)
       
     
 
