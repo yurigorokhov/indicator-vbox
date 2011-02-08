@@ -6,13 +6,23 @@ class VBox:
     
     # list of running vm's
     running_vms = []
+    # existing VM's
+    existing_vms = []
     
     def __init__(self):
-        self.populate_running_vms()
+        self.update()
+    
+    # does vm exist?
+    def exists(self, vm):
+        return (self.existing_vms.count(vm) > 0)
+    
+    # Populate existing vms
+    def populate_existing_vms(self):
+        self.existing_vms = commands.getoutput("VBoxManage list vms | sed -e 's/^.*\\\"\(.*\)\\\".*$/\\1/'").split('\n')
     
     # Retrieve the names of installed VM's
     def get_vm_list(self):
-        return commands.getoutput("VBoxManage list vms | sed -e 's/^.*\\\"\(.*\)\\\".*$/\\1/'").split('\n')
+        return self.existing_vms
     
     # populate list of running vms
     def populate_running_vms(self):
@@ -33,7 +43,7 @@ class VBox:
         else:
             return 0  
     
-    # Suspend all runnign vms
+    # Suspend all running vms
     def suspend_all_running(self):
         self.populate_running_vms()
         ret_code = 0
@@ -55,4 +65,5 @@ class VBox:
     # Update lists
     def update(self):
         self.populate_running_vms()
+        self.populate_existing_vms()
         

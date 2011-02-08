@@ -78,6 +78,7 @@ def remove_vm_menu(menu, vm):
             if(item.get_label() == vm):
                 menu.remove(item)
                 remove_next_items = 2
+        # remove the "Run/Suspend Button and separator"
         else:
             if(remove_next_items > 0):
                 menu.remove(item)
@@ -101,13 +102,19 @@ def update_menu(menu, vbox, ind):
   
   is_running = 0
   previous_item = 0
+  remove_list = []
+  vm_list = []
   
   items = menu.get_children()
   for item in items:
       if(item.get_name() == "GtkMenuItem"):
+          # Check if VM still exists
+          if(vbox.exists(item.get_label()) == False):
+              remove_list.append(item.get_label())
+          else:
+              vm_list.append(item.get_label())
           if(vbox.is_vm_running(item.get_label())):
               is_running = 1
-	      are_any_running = 1
           else:
               is_running = 0
           previous_item = item
@@ -123,6 +130,16 @@ def update_menu(menu, vbox, ind):
               set_image(item, "suspend")
               item.disconnect(event_dict[previous_item.get_label()])
               event_dict[previous_item.get_label()] = item.connect("activate", suspend_VM, previous_item.get_label(), vbox)
+  
+  # Remove deleted VM's
+  for vm in remove_list:
+      remove_vm_menu(menu, vm)
+  # TODO Must be added in the correct place
+  # Add new VM's to menu
+  for vm in vbox.existing_vms:
+      if(vm_list.count(vm) < 1):
+        add_vm_menu(menu, vm, vbox)
+  
   ind.set_menu(menu)
     # remove VM's that do not exist anymore
   return (vbox.running_vms.__len__() != 0)
@@ -183,7 +200,7 @@ if __name__ == "__main__":
   count = 0 
   while(True):
     gtk.main_iteration(False)
-    if(count == 50):
+    if(count == 100):
       if( update_menu(menu, vbox, ind) == 1):
 	   ind.set_status(appindicator.STATUS_ATTENTION)
       else:

@@ -1,3 +1,2 @@
 - Icons are not switching when VM's start and stop
-- maintain a list of running VM's and clean up code accordingly
-
+- adding of vm's dynamically must be done in the correct place in the menu
