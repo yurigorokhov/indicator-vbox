@@ -1,5 +1,3 @@
-# This is a UI wrapper for VirtualBox that allows
-# you to quickly start and stop VM's
 #!/usr/bin/python
 
 import gobject
@@ -46,27 +44,39 @@ def check_deps():
     if not os.path.exists("/usr/bin/VBoxManage"):
         error('/usr/bin/VBoxManage was not found')
 
-# Add VM to menu
-def add_vm_menu(menu, vm, vbox):
+# Add VM to menu. If -1 is supplied for position, the last position will be used
+def add_vm_menu(menu, vm, vbox, position):
     menu_items = gtk.MenuItem(vm)
-    menu.append(menu_items)
+    if(position <= -1):
+        menu.append(menu_items)
+    else:
+        menu.insert(menu_items, position)
     menu_items.show()
     # start
     if(vbox.is_vm_running(vm) == 0):
         menu_items = gtk.ImageMenuItem("Run")
         set_image(menu_items, "run")
-        menu.append(menu_items)
+        if(position <= -1):
+            menu.append(menu_items)
+        else:
+            menu.insert(menu_items, position+1)
         event_dict[vm] = menu_items.connect("activate", launch_VM, vm, vbox)
         menu_items.show()
     else:
         menu_items = gtk.ImageMenuItem("Suspend")
         set_image(menu_items, "suspend")
-        menu.append(menu_items)
+        if(position <= -1):
+            menu.append(menu_items)
+        else:
+            menu.insert(menu_items, position+1)
         event_dict[vm] = menu_items.connect("activate", suspend_VM, vm, vbox)
         menu_items.show()
         # separator
     menu_items = gtk.SeparatorMenuItem()
-    menu.append(menu_items)
+    if(position <= -1):
+            menu.append(menu_items)
+    else:
+            menu.insert(menu_items, position+2)
     menu_items.show()
     
 # Remove VM from menu
@@ -138,7 +148,7 @@ def update_menu(menu, vbox, ind):
   # Add new VM's to menu
   for vm in vbox.existing_vms:
       if(vm_list.count(vm) < 1):
-        add_vm_menu(menu, vm, vbox)
+        add_vm_menu(menu, vm, vbox, vm_list.__len__()*3)
   
   ind.set_menu(menu)
     # remove VM's that do not exist anymore
@@ -151,12 +161,12 @@ def create_menu(menu, vbox, ind):
 
   # Generate menu items for each VM
   for vm in vm_list:
-    add_vm_menu(menu, vm, vbox)
+    add_vm_menu(menu, vm, vbox, -1)
 
   # Suspend all 
   menu_items = gtk.ImageMenuItem("Suspend All") 
   set_image(menu_items, "suspend")
-  menu.append(menu_items)
+  menu.append(menu_items, )
   menu_items.connect("activate", suspend_all, vbox)
   menu_items.show()
   menu_items = gtk.SeparatorMenuItem()
