@@ -5,22 +5,41 @@ import subprocess
 class VBox: 
     
     # list of running vm's
-    running_vm = []
+    running_vms = []
     
     def __init__(self):
-        pass
+        self.populate_running_vms()
     
     # Retrieve the names of installed VM's
     def get_vm_list(self):
         return commands.getoutput("VBoxManage list vms | sed -e 's/^.*\\\"\(.*\)\\\".*$/\\1/'").split('\n')
     
+    # populate list of running vms
+    def populate_running_vms(self):
+        del self.running_vms[:]
+        for vm in self.get_vm_list():
+            if(self.__vm_running(vm) == 1):
+                self.running_vms.append(vm)
+    
+    # Check if a vm is running by querying running_vms[]
+    def is_vm_running(self, vm):
+        return (self.running_vms.count(vm) > 0)
+    
     # Check if a vm is running
-    def is_vm_running(self, vmname):
+    def __vm_running(self, vmname):
         output = commands.getoutput("VBoxManage showvminfo \"" + vmname + "\" | grep State")
         if(output.count("running") > 0):
             return 1
         else:
             return 0  
+    
+    # Suspend all runnign vms
+    def suspend_all_running(self):
+        self.populate_running_vms()
+        ret_code = 0
+        for vm in self.running_vms:
+            ret_code = self.suspend_VM(vm)
+        return ret_code
     
     def launch_VBox(self):
         return subprocess.call(["VirtualBox"])
@@ -32,4 +51,8 @@ class VBox:
     # Launch a VM by name
     def launch_VM(self, vmname):
         return subprocess.call(["VBoxManage", "startvm", vmname])
+    
+    # Update lists
+    def update(self):
+        self.populate_running_vms()
         

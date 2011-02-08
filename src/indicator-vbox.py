@@ -25,6 +25,12 @@ def suspend_VM(self, vm, vbox):
     ret_code = vbox.suspend_VM(vm)
     if(ret_code != 0):
         notify("Error suspending " + vm)
+        
+def suspend_all(self, vbox):
+    notify("Suspending all virtual machines")
+    ret_code = vbox.suspend_all_running()
+    if(ret_code != 0):
+        notify("Error suspending all virtual machines")
     
 def launch_VBox(self, vbox):
     ret_code = vbox.launch_VBox()
@@ -52,6 +58,8 @@ def set_image(menu_item, image_type):
 
 # update menu
 def update_menu(menu, vbox):
+  vbox.update()
+  
   are_any_running = 0
   is_running = 0
   previous_item = 0
@@ -77,7 +85,7 @@ def update_menu(menu, vbox):
               set_image(item, "suspend")
               item.disconnect(event_dict[previous_item.get_label()])
               event_dict[previous_item.get_label()] = item.connect("activate", suspend_VM, previous_item.get_label(), vbox)
-  return are_any_running  
+  return (vbox.running_vms.__len__() != 0)
 
 # Populates the Menu
 def create_menu(menu, ind, vbox):
@@ -109,14 +117,14 @@ def create_menu(menu, ind, vbox):
   ind.set_menu(menu)
 
   # Suspend all 
-  #menu_items = gtk.ImageMenuItem("Suspend All") 
-  #set_image(menu_items, "suspend")
-  #menu.append(menu_items)
-  #menu_items.connect("activate", suspend_all)
-  #menu_items.show()
-  #menu_items = gtk.SeparatorMenuItem()
-  #menu.append(menu_items)
-  #menu_items.show()
+  menu_items = gtk.ImageMenuItem("Suspend All") 
+  set_image(menu_items, "suspend")
+  menu.append(menu_items)
+  menu_items.connect("activate", suspend_all, vbox)
+  menu_items.show()
+  menu_items = gtk.SeparatorMenuItem()
+  menu.append(menu_items)
+  menu_items.show()
   
 
   #  Virtual Box menu item
