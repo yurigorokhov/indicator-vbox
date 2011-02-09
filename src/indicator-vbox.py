@@ -126,7 +126,7 @@ def update_menu(menu, vbox, ind):
   # Add new VM's to menu
   for vm in vbox.existing_vms:
       if(vm_list.count(vm) < 1):
-        add_vm_menu(menu, vm, vbox, vm_list.__len__(), True)
+        add_vm_menu(menu, vm, vbox, vm_list.__len__()-1, True)
   
   ind.set_menu(menu)
     # remove VM's that do not exist anymore
