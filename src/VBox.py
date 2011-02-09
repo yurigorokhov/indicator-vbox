@@ -1,5 +1,25 @@
 import commands
 import subprocess
+import gtk
+
+# Class for menu items
+class VBoxImageMenuItem(gtk.ImageMenuItem):
+    is_vm = False
+    state = 0 # 0 > suspended 1 > running
+    
+    def __init__(self, title, is_vm):
+        gtk.ImageMenuItem.__init__(self, title)
+        self.is_vm = is_vm
+        self.state = 0
+    
+    def set_state(self, state):
+        self.state = state
+        
+    def get_state(self):
+        return self.state
+    
+    def get_name(self):
+        return "VBoxImageMenuItem"
 
 # VirtualBox Class to interface with the program
 class VBox: 

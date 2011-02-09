@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import gobject
 import gtk
 import appindicator
 import commands
@@ -13,24 +12,35 @@ import VBox
 
 # Dictionary of menu items and their associated function
 event_dict = {}
+# flag to update menu
+menu_changed = False
 
 def launch_VM(self, vm, vbox):
     notify("Launching " + vm)
     ret_code = vbox.launch_VM(vm)
     if(ret_code != 0):
         notify("Error launching " + vm)
+    else:
+        global menu_changed
+        menu_changed = True
     
 def suspend_VM(self, vm, vbox):
     notify("Suspending " + vm)
     ret_code = vbox.suspend_VM(vm)
     if(ret_code != 0):
         notify("Error suspending " + vm)
+    else:
+        global menu_changed
+        menu_changed = True
         
 def suspend_all(self, vbox):
     notify("Suspending all virtual machines")
     ret_code = vbox.suspend_all_running()
     if(ret_code != 0):
         notify("Error suspending all virtual machines")
+    else:
+        global menu_changed
+        menu_changed = True
     
 def launch_VBox(self, vbox):
     ret_code = vbox.launch_VBox()
@@ -45,55 +55,29 @@ def check_deps():
         error('/usr/bin/VBoxManage was not found')
 
 # Add VM to menu. If -1 is supplied for position, the last position will be used
-def add_vm_menu(menu, vm, vbox, position):
-    menu_items = gtk.MenuItem(vm)
-    if(position <= -1):
-        menu.append(menu_items)
-    else:
-        menu.insert(menu_items, position)
-    menu_items.show()
-    # start
-    if(vbox.is_vm_running(vm) == 0):
-        menu_items = gtk.ImageMenuItem("Run")
-        set_image(menu_items, "run")
+def add_vm_menu(menu, vm, vbox, position, is_vm):
+        menu_items = VBox.VBoxImageMenuItem(vm, is_vm)
         if(position <= -1):
             menu.append(menu_items)
         else:
             menu.insert(menu_items, position+1)
-        event_dict[vm] = menu_items.connect("activate", launch_VM, vm, vbox)
-        menu_items.show()
-    else:
-        menu_items = gtk.ImageMenuItem("Suspend")
-        set_image(menu_items, "suspend")
-        if(position <= -1):
-            menu.append(menu_items)
+        if(vbox.is_vm_running(vm) == 0):
+            menu_items.set_state(0)
+            set_image(menu_items, "run")
+            event_dict[vm] = menu_items.connect("activate", launch_VM, vm, vbox)
         else:
-            menu.insert(menu_items, position+1)
-        event_dict[vm] = menu_items.connect("activate", suspend_VM, vm, vbox)
+            menu_items.set_state(1)
+            set_image(menu_items, "suspend")
+            event_dict[vm] = menu_items.connect("activate", suspend_VM, vm, vbox)
         menu_items.show()
-        # separator
-    menu_items = gtk.SeparatorMenuItem()
-    if(position <= -1):
-            menu.append(menu_items)
-    else:
-            menu.insert(menu_items, position+2)
-    menu_items.show()
     
 # Remove VM from menu
 def remove_vm_menu(menu, vm):
-    remove_next_items = 0
     items = menu.get_children()
     for item in items:
-        if(item.get_name() == "GtkMenuItem"):
-            if(item.get_label() == vm):
-                menu.remove(item)
-                remove_next_items = 2
-        # remove the "Run/Suspend Button and separator"
-        else:
-            if(remove_next_items > 0):
-                menu.remove(item)
-                remove_next_items -= 1
-
+        if(item.get_label() == vm):
+            menu.remove(item)
+     
 # sets the image of a menu item
 def set_image(menu_item, image_type):
     if(image_type == "run"):
@@ -108,39 +92,33 @@ def set_image(menu_item, image_type):
 
 # update menu
 def update_menu(menu, vbox, ind):
+  global menu_changed
+  menu_changed = False
   vbox.update()
-  
   is_running = 0
-  previous_item = 0
   remove_list = []
   vm_list = []
   
   items = menu.get_children()
   for item in items:
-      if(item.get_name() == "GtkMenuItem"):
+      if(item.get_name() == "VBoxImageMenuItem" and item.is_vm):
           # Check if VM still exists
           if(vbox.exists(item.get_label()) == False):
               remove_list.append(item.get_label())
           else:
               vm_list.append(item.get_label())
           if(vbox.is_vm_running(item.get_label())):
-              is_running = 1
-          else:
-              is_running = 0
-          previous_item = item
-      else:
-          if(is_running == 0 and item.get_label() == "Suspend"):
-              item.set_label("Run")
+              if(item.get_state() == 0):
+                  item.set_state(1)
+                  set_image(item, "suspend")
+                  item.disconnect(event_dict[item.get_label()])
+                  event_dict[item.get_label()] = item.connect("activate", suspend_VM, item.get_label(), vbox)
+          elif(item.get_state() == 1):
+              item.set_state(0)
               set_image(item, "run")
-              item.disconnect(event_dict[previous_item.get_label()])
-              event_dict[previous_item.get_label()] = item.connect("activate", launch_VM, previous_item.get_label(), vbox)
-              
-          elif(is_running == 1 and item.get_label() == "Run"):
-              item.set_label("Suspend")
-              set_image(item, "suspend")
-              item.disconnect(event_dict[previous_item.get_label()])
-              event_dict[previous_item.get_label()] = item.connect("activate", suspend_VM, previous_item.get_label(), vbox)
-  
+              item.disconnect(event_dict[item.get_label()])
+              event_dict[item.get_label()] = item.connect("activate", launch_VM, item.get_label(), vbox)
+     
   # Remove deleted VM's
   for vm in remove_list:
       remove_vm_menu(menu, vm)
@@ -148,7 +126,7 @@ def update_menu(menu, vbox, ind):
   # Add new VM's to menu
   for vm in vbox.existing_vms:
       if(vm_list.count(vm) < 1):
-        add_vm_menu(menu, vm, vbox, vm_list.__len__()*3)
+        add_vm_menu(menu, vm, vbox, vm_list.__len__(), True)
   
   ind.set_menu(menu)
     # remove VM's that do not exist anymore
@@ -161,10 +139,13 @@ def create_menu(menu, vbox, ind):
 
   # Generate menu items for each VM
   for vm in vm_list:
-    add_vm_menu(menu, vm, vbox, -1)
+    add_vm_menu(menu, vm, vbox, -1, True)
 
   # Suspend all 
-  menu_items = gtk.ImageMenuItem("Suspend All") 
+  menu_items = gtk.SeparatorMenuItem()
+  menu.append(menu_items)
+  menu_items.show()
+  menu_items = VBox.VBoxImageMenuItem("Suspend All", False) 
   set_image(menu_items, "suspend")
   menu.append(menu_items, )
   menu_items.connect("activate", suspend_all, vbox)
@@ -174,11 +155,11 @@ def create_menu(menu, vbox, ind):
   menu_items.show()
   
   #  VirtualBox Control Panel menu item
-  menu_items = gtk.ImageMenuItem("Control Panel") 
+  menu_items = VBox.VBoxImageMenuItem("Control Panel", False) 
   set_image(menu_items, "control panel")
   menu.append(menu_items)
   menu_items.connect("activate", launch_VBox, vbox)
-
+  
   menu_items.show()
   ind.set_menu(menu)
 
@@ -209,8 +190,8 @@ if __name__ == "__main__":
   
   count = 0 
   while(True):
-    gtk.main_iteration(False)
-    if(count == 100):
+    gtk.main_iteration(False)        
+    if(menu_changed == True or count == 500):
       if( update_menu(menu, vbox, ind) == 1):
 	   ind.set_status(appindicator.STATUS_ATTENTION)
       else:

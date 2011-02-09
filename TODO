@@ -1,0 +1,3 @@
+- Improve speed of applet (increase refresh rate?)
+- Block applet while VirtualBox control panel is running?
+- Applet hangs sometimes and clicking buttons doesn't do anything 
