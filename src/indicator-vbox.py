@@ -178,6 +178,10 @@ if __name__ == "__main__":
   
   menu = gtk.Menu()
   
+  # enable menu icons  
+  window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+  window.get_settings().set_long_property('gtk-menu-images', True, '')
+  
   vbox = VBox.VBox()
   
   ind = appindicator.Indicator ("VirtualBox Indicator",
