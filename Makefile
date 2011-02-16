@@ -13,8 +13,11 @@ uninstall:
 	rm -r -f ${INSTALL_DIR}/VBox.pyc
 	
 dist:
-	tar -c images Makefile README screenshot.png src TODO > indicator-vbox-${VERSION}.tar
+	mkdir indicator-vbox
+	cp -r -f Makefile TODO README src images screenshot.png indicator-vbox
+	tar -c indicator-vbox > indicator-vbox-${VERSION}.tar
 	gzip indicator-vbox-${VERSION}.tar
+	rm -r -f indicator-vbox
 
 clean:
 	rm -r -f *.tar.gz 
