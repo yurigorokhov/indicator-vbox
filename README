@@ -3,8 +3,8 @@ VirtualBox Indicator Applet
 INSTALL
 --------------------------------------------
 
-To install simply run the install.sh script
-> sudo ./install.sh
+To install simply run this command
+> sudo make install
 
 This will install the executable indicator-vbox into /usr/local/bin by default.
 Edit the install.sh file if you want a different location.
@@ -13,7 +13,7 @@ UNINSTALL
 --------------------------------------------
 
 To uninstall simply type:
-> sudo ./install --uninstall
+> sudo make uninstall
 
 CONTACT
 --------------------------------------------
