@@ -155,7 +155,7 @@ def create_menu(menu, vbox, ind):
   menu_items.show()
   
   #  VirtualBox Control Panel menu item
-  menu_items = VBox.VBoxImageMenuItem("Control Panel", False) 
+  menu_items = VBox.VBoxImageMenuItem("VirtualBox", False) 
   set_image(menu_items, "control panel")
   menu.append(menu_items)
   menu_items.connect("activate", launch_VBox, vbox)
